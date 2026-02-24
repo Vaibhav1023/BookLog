@@ -1,0 +1,202 @@
+# SETUP GUIDE — BookLog
+# Read this top to bottom. Do every step in order.
+# Estimated time: 10 minutes.
+
+================================================================================
+WHAT YOU NEED INSTALLED (before starting)
+================================================================================
+
+1. Python 3.11+       → check: python3 --version
+2. Node.js 18+        → check: node --version
+3. npm                → check: npm --version
+
+If any are missing, install from:
+  Python  → https://python.org/downloads
+  Node.js → https://nodejs.org (LTS version)
+
+================================================================================
+STEP 1 — GET THE PROJECT FOLDER
+================================================================================
+
+Your project folder looks like this:
+
+  booklog/
+  ├── backend/
+  │   ├── app/
+  │   ├── tests/
+  │   ├── run.py
+  │   └── requirements.txt
+  ├── frontend/
+  │   ├── src/
+  │   ├── public/
+  │   └── package.json
+  ├── README.md
+  ├── claude.md
+  └── agents.md
+
+================================================================================
+STEP 2 — SET UP THE BACKEND (do this first)
+================================================================================
+
+Open a terminal and run these commands ONE BY ONE:
+
+  cd booklog/backend
+
+  pip install Flask
+
+That's it. Only one package needed. Everything else (sqlite3, hashlib, json)
+is built into Python.
+
+Now start the backend:
+
+  python run.py
+
+You should see:
+  * Running on http://0.0.0.0:5000
+
+✅ Backend is running. Leave this terminal open.
+
+VERIFY IT WORKS — open a new terminal and run:
+
+  curl http://localhost:5000/api/health
+
+You should see: {"status":"ok"}
+
+================================================================================
+STEP 3 — SET UP THE FRONTEND (open a NEW terminal)
+================================================================================
+
+  cd booklog/frontend
+
+  npm install
+
+This takes 1-2 minutes the first time (downloads React and dependencies).
+
+Now start the frontend:
+
+  npm start
+
+Your browser will open automatically at http://localhost:3000
+
+✅ Frontend is running.
+
+================================================================================
+STEP 4 — VERIFY EVERYTHING WORKS
+================================================================================
+
+In your browser at http://localhost:3000 you should see:
+  - A landing page with "Get Started" button
+  - Click it → you get a login/register form
+  - Register a new account
+  - You're taken to your empty library
+  - Click "+ Add Book" → search for a book → it auto-fills from Open Library
+  - Add it and it appears in your library
+
+================================================================================
+STEP 5 — RUN THE TESTS (for your walkthrough video)
+================================================================================
+
+Open a NEW terminal:
+
+  cd booklog/backend
+
+  python -m unittest discover tests/ -v
+
+You should see: Ran 71 tests ... OK
+
+Good thing to show in your walkthrough video.
+
+================================================================================
+COMMON PROBLEMS & FIXES
+================================================================================
+
+PROBLEM: "pip: command not found"
+FIX: Try "pip3" instead of "pip"
+  pip3 install Flask
+
+PROBLEM: "python: command not found"
+FIX: Try "python3" instead of "python"
+  python3 run.py
+
+PROBLEM: Frontend shows "Cannot reach server"
+FIX: Make sure the backend is running (Step 2). Both must run at same time.
+
+PROBLEM: "npm install" fails
+FIX: Make sure you're in the frontend/ folder, not the root booklog/ folder.
+
+PROBLEM: Port 5000 already in use
+FIX: Kill whatever is using it:
+  Mac/Linux: lsof -ti:5000 | xargs kill
+  Then run: python run.py
+
+PROBLEM: Port 3000 already in use
+FIX: npm start will ask "Use port 3001 instead?" → type Y
+  Then open http://localhost:3001 instead
+
+PROBLEM: "Open Library search" returns no results
+FIX: You need internet access for search. The app still works without it —
+  just fill in the book details manually.
+
+================================================================================
+WHAT THE APP DOES (for your walkthrough)
+================================================================================
+
+USER FLOW:
+  Landing page → Register/Login → Library
+
+FEATURES:
+  - Register / Login with email + password (JWT auth)
+  - Add books: search Open Library OR fill manually
+  - Track status: Want to Read / Reading / Finished / Abandoned
+  - Rate books 1-5 stars (only when Finished or Abandoned)
+  - Edit or delete any book
+  - Stats dashboard: total, finished, avg rating, pages read
+  - Filter library by status
+  - Each user sees only their own books
+
+KEY TECHNICAL POINTS TO MENTION IN WALKTHROUGH:
+  - 4-layer architecture: Route → Schema → Service → Repository
+  - JWT implemented with Python stdlib only (no external library)
+  - CORS handled manually (no flask-cors needed)
+  - Only 1 pip install required (Flask)
+  - 71 automated tests
+  - Rating blocked on unfinished books — enforced in 2 places
+  - User data isolation enforced at SQL level (every query has user_id)
+
+================================================================================
+ENVIRONMENT VARIABLES (optional, for production)
+================================================================================
+
+These are OPTIONAL for local development. The app works without them.
+
+If you want to set them:
+
+  Mac/Linux:
+    export JWT_SECRET="any-long-random-string-here"
+    export FLASK_DEBUG="true"
+
+  Windows:
+    set JWT_SECRET=any-long-random-string-here
+    set FLASK_DEBUG=true
+
+Without JWT_SECRET, a random one is generated on startup (sessions reset
+if you restart the server — fine for development and demo).
+
+================================================================================
+QUICK REFERENCE — COMMANDS
+================================================================================
+
+Start backend:    cd booklog/backend && python run.py
+Start frontend:   cd booklog/frontend && npm start
+Run tests:        cd booklog/backend && python -m unittest discover tests/ -v
+
+Backend URL:      http://localhost:5000
+Frontend URL:     http://localhost:3000
+
+API endpoints:
+  POST /api/auth/register   — create account
+  POST /api/auth/login      — login
+  GET  /api/books           — list your books
+  POST /api/books           — add a book
+  GET  /api/books/stats     — your reading stats
+  GET  /api/search?q=dune   — search Open Library

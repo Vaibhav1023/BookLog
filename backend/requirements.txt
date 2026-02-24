@@ -1,0 +1,6 @@
+Flask>=3.0.0
+# All other dependencies are Python stdlib:
+# sqlite3, hashlib, hmac, base64, secrets, json, datetime, urllib
+#
+# Production additions:
+# gunicorn>=21.0.0
