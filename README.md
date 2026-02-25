@@ -30,6 +30,18 @@ python -m unittest discover tests/ -v
 
 ---
 
+## Screenshots
+
+**Landing Page**
+<img width="1881" height="796" alt="Screenshot 2026-02-25 175444" src="https://github.com/user-attachments/assets/4a0eacb5-8962-4961-aec7-83bcf19c916c" />
+
+
+**Library**
+<img width="1874" height="766" alt="Screenshot 2026-02-25 175530" src="https://github.com/user-attachments/assets/0157db09-6f1d-4a4b-9664-300d0dbb6a16" />
+
+
+---
+
 ## Project Structure
 
 ```
