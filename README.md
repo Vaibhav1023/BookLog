@@ -168,3 +168,48 @@ The frontend debounces search input (500ms) and shows results in a dropdown. Cli
 | GET | `/api/search?q=dune` | Search Open Library |
 
 ---
+
+## Technical Decisions
+
+**Raw sqlite3 over an ORM**
+Every SQL query is explicit and visible — no hidden queries, no lazy loading surprises, no magic. The repository pattern means switching to PostgreSQL only requires changing `database.py` and the two repository files. Routes, services, schemas, and all frontend code stay untouched.
+
+**Python stdlib only — one pip install**
+JWT signing (HMAC-SHA256), password hashing (PBKDF2 — 260,000 iterations, NIST recommended), and HTTP requests to Open Library all use Python's built-in libraries. The only external dependency is Flask. Fewer dependencies means fewer vulnerabilities and less to maintain.
+
+**Manual CORS — no flask-cors**
+Two lines in `app/__init__.py` handle cross-origin requests. No external library needed, and the allowed origin is configurable via environment variable.
+
+**App factory pattern**
+`create_app(config)` builds the entire app from a config dict. Tests pass in a temp database path and get a fully isolated instance. No global state, no monkey-patching.
+
+**Rating rule enforced twice**
+The rule "rating only allowed on finished or abandoned books" is checked in both `schemas/schemas.py` (input validation) and `services/book_service.py` (domain rule). Removing either check alone does not break the invariant.
+
+**Data isolation at SQL level**
+Every query in `BookRepository` includes `AND user_id = ?`. Users cannot access each other's data even if they know a book ID — the SQL returns nothing, not just an error at the application layer.
+
+**Open Library proxied through Flask**
+Search requests go to the backend, not directly from the browser. This avoids CORS issues with openlibrary.org, keeps third-party API details server-side, and makes it easy to add caching or rate limiting later.
+
+## Extension Approach
+
+**Add a genre field**
+1. `models/book.py` — add field to dataclass and `to_dict()`
+2. `schemas/schemas.py` — add optional string validation
+3. `database.py` — add column to schema
+4. `repositories/book_repository.py` — add to `create()`, `update()`, `_row_to_book()`
+5. `frontend/src/components/BookFormModal.js` — add input field
+6. Add tests
+
+**Add a new reading status**
+1. `models/book.py` — add to `ReadingStatus` enum
+2. Decide if ratable — update `RATABLE_STATUSES` if so
+3. `frontend/src/pages/LibraryPage.js` — add to `STATUSES` array
+4. Add tests for the new status transitions
+
+**Switch to PostgreSQL**
+Change `database.py` to use `psycopg2`, update `?` placeholders to `%s` in both repository files, update `AUTOINCREMENT` to `SERIAL` in schema. Nothing else changes.
+
+**Add pagination**
+Add `?page=` and `?limit=` query params to the list route. Add `LIMIT` and `OFFSET` to `BookRepository.get_all()`. Update the frontend to show page controls.
